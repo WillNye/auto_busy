@@ -28,10 +28,11 @@ class AdvancedCamShift:
         self.track_windows = None
         self.app_name = 'pycharm.exe'
         self.window_name = 'camstat - [C:\\Users\\wbeasley\\PycharmProjects\\camstat] - ...\\non_vsm_scripts\\update_tables.py - PyCharm 2016.2.3'
+        self.camera_url = 'rtsp://admin:admin@10.10.50.33:8554/CH001.sdp'
 
         # initialize the camera and grab a reference to the raw camera capture
         try:
-            self.camera = cv2.VideoCapture("rtsp://admin:admin@10.10.50.33:8554/CH001.sdp")
+            self.camera = cv2.VideoCapture(self.camera_url)
         except Exception as e:
             print(e)
 
