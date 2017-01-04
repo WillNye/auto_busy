@@ -1,5 +1,6 @@
 {
 	"show_video": false,
+	"debug_video": false,
 	"use_dropbox": false,
 	"dropbox_key": "YOUR_DROPBOX_KEY",
 	"dropbox_secret": "YOUR_DROPBOX_SECRET",

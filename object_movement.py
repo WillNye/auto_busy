@@ -49,7 +49,7 @@ class AdvancedCamShift:
         pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
         current_objects = len(pick)
 
-        if self.conf["show_video"]:
+        if self.conf["show_video"] or self.conf["debug_video"]:
             # draw the final bounding boxes
             for (xA, yA, xB, yB) in pick:
                 cv2.rectangle(self.for_show, (xA * 2, yA * 2), (xB * 2, yB * 2), (0, 255, 0), 2)
@@ -76,7 +76,7 @@ class AdvancedCamShift:
             self.timestamp = datetime.datetime.now()
 
             # resize the frame, convert it to grayscale, and blur it
-            if self.conf["show_video"]:
+            if self.conf["show_video"] or self.conf["debug_video"]:
                 self.for_show = imutils.resize(frame, width=800)
             frame = imutils.resize(frame, width=400)
 
@@ -85,6 +85,10 @@ class AdvancedCamShift:
             if current_objects > 0:
                 self.counter += 1
                 if self.counter > 5:
+                    if self.conf["debug_video"]:
+                        # display the security feed
+                        cv2.imshow("Security Feed", self.for_show)
+                        key = cv2.waitKey(100) & 0xFF
                     for proc in psutil.process_iter():
                         if proc.name() == self.app_name:
                             app = Application(backend="uia").connect(process=proc.pid)
