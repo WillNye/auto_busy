@@ -25,16 +25,38 @@ class AdvancedCamShift:
         (self.dX, self.dY) = (0, 0)
         self.counter = 0
         self.for_show = None
+        self.first_frame = None
         self.track_windows = None
         self.app_name = 'pycharm.exe'
         self.window_name = 'camstat - [C:\\Users\\wbeasley\\PycharmProjects\\camstat] - ...\\non_vsm_scripts\\update_tables.py - PyCharm 2016.2.3'
         self.camera_url = 'rtsp://admin:admin@10.10.50.33:8554/CH001.sdp'
+
+        for proc in psutil.process_iter():
+            if proc.name() == self.app_name:
+                app = Application(backend="uia").connect(process=proc.pid)
+                self.window = app.window(best_match=self.window_name)
 
         # initialize the camera and grab a reference to the raw camera capture
         try:
             self.camera = cv2.VideoCapture(self.camera_url)
         except Exception as e:
             print(e)
+
+    def _basic_detection(self, frame):
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = cv2.GaussianBlur(gray, (21, 21), 0)
+
+        if self.first_frame is None:
+            self.first_frame = gray
+            return 0
+
+        frame_delta = cv2.absdiff(self.first_frame, gray)
+        thresh = cv2.threshold(frame_delta, 25, 255, cv2.THRESH_BINARY)[1]
+        thresh = cv2.dilate(thresh, None, iterations=2)
+
+        (_, cnts, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        return len(cnts)
 
     def _define_windows(self, frame):
         # detect people in the image
@@ -78,22 +100,19 @@ class AdvancedCamShift:
             # resize the frame, convert it to grayscale, and blur it
             if self.conf["show_video"] or self.conf["debug_video"]:
                 self.for_show = imutils.resize(frame, width=800)
-            frame = imutils.resize(frame, width=400)
+            frame = imutils.resize(frame, width=500)
 
             current_objects = self._define_windows(frame)
-
             if current_objects > 0:
                 self.counter += 1
-                if self.counter > 5:
+                if self.counter > 3:
                     if self.conf["debug_video"]:
                         # display the security feed
                         cv2.imshow("Security Feed", self.for_show)
                         key = cv2.waitKey(100) & 0xFF
-                    for proc in psutil.process_iter():
-                        if proc.name() == self.app_name:
-                            app = Application(backend="uia").connect(process=proc.pid)
-                            dlg_spec = app.window(best_match=self.window_name)
-                            dlg_spec.wrapper_object().maximize()
+
+                    self.window.wrapper_object().maximize()
+
             else:
                 self.counter = 0
 
@@ -102,7 +121,8 @@ class AdvancedCamShift:
                 # display the security feed
                 cv2.imshow("Security Feed", self.for_show)
                 key = cv2.waitKey(100) & 0xFF
-
+            else:
+                key = cv2.waitKey(100) & 0xFF
 
 if __name__ == '__main__':
     object_tracing = AdvancedCamShift()
