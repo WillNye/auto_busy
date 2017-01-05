@@ -27,6 +27,7 @@ class AdvancedCamShift:
         self.for_show = None
         self.first_frame = None
         self.track_windows = None
+        self.currently_max = False
         self.app_name = 'pycharm.exe'
         self.window_name = 'camstat - [C:\\Users\\wbeasley\\PycharmProjects\\camstat] - ...\\non_vsm_scripts\\update_tables.py - PyCharm 2016.2.3'
         self.camera_url = 'rtsp://admin:admin@10.10.50.33:8554/CH001.sdp'
@@ -102,7 +103,7 @@ class AdvancedCamShift:
                 self.for_show = imutils.resize(frame, width=800)
             frame = imutils.resize(frame, width=500)
 
-            current_objects = self._define_windows(frame)
+            current_objects = self._basic_detection(frame)
             if current_objects > 0:
                 self.counter += 1
                 if self.counter > 3:
@@ -110,11 +111,14 @@ class AdvancedCamShift:
                         # display the security feed
                         cv2.imshow("Security Feed", self.for_show)
                         key = cv2.waitKey(100) & 0xFF
-
-                    self.window.wrapper_object().maximize()
+                    if not self.currently_max:
+                        self.window.wrapper_object().maximize()
+                        self.currently_max = True
 
             else:
                 self.counter = 0
+                if self.currently_max:
+                    self.currently_max = False
 
             # check to see if the frames should be displayed to screen
             if self.conf["show_video"]:
